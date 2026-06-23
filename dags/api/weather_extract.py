@@ -509,7 +509,7 @@ def save_historical_to_json(records: list, start_date: str, end_date: str) -> st
     """
     Save historical records to a JSON file.
     """
-    DATA_OUTPUT_DIR=/opt/airflow/data
+    output_dir = Path(DATA_DIR)
     output_dir.mkdir(parents=True, exist_ok=True)
     filename = f"weather_historical_{start_date}_to_{end_date}.json"
     filepath = output_dir / filename
