@@ -95,7 +95,7 @@ def load_daily_forecast() -> None:
     """
     from datetime import datetime
     today    = datetime.now().strftime("%Y-%m-%d")
-    filepath = Path("data") / f"weather_municipalities_{today}.json"
+    filepath = Path("/opt/airflow/data") / f"weather_municipalities_{today}.json"
 
     if not filepath.exists():
         raise FileNotFoundError(
@@ -130,7 +130,7 @@ def load_backfill() -> None:
     conn.close()
 
     # find the backfill file
-    data_dir = Path("data")
+    data_dir = Path("/opt/airflow/data")
     backfill_files = list(data_dir.glob("weather_historical_*.json"))
 
     if not backfill_files:
