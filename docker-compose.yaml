@@ -1,0 +1,113 @@
+version: '3.8'
+
+# ============================================================
+# COMMON AIRFLOW CONFIG
+# Shared across webserver, scheduler and init
+# So we don't repeat ourselves
+# ============================================================
+x-airflow-common: &airflow-common
+  build: .
+  env_file:
+    - .env
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+    AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
+    AIRFLOW_CONN_WEATHER_DB: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_WWW_USER_USERNAME}
+    _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_WWW_USER_PASSWORD}
+  volumes:
+    # Airflow watches this folder for DAGs
+    - ./dags:/opt/airflow/dags
+    # Logs written here
+    - ./logs:/opt/airflow/logs
+    # JSON files written by extract DAG
+    - ./data:/opt/airflow/data
+    # SQL files loaded by Python
+    - ./scripts:/opt/airflow/scripts
+    # SODA check files
+    - ./include:/opt/airflow/include
+  depends_on:
+    postgres:
+      condition: service_healthy
+  user: "${AIRFLOW_UID:-50000}:0"
+
+# ============================================================
+# SERVICES
+# ============================================================
+services:
+
+  # ----------------------------------------------------------
+  # POSTGRES
+  # Runs your weather_db data warehouse
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:15
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # AIRFLOW INIT
+  # Runs once on first boot
+  # Migrates the Airflow DB and creates your admin user
+  # Exits after — it's not a long-running service
+  # ----------------------------------------------------------
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create \
+          --username ${AIRFLOW_WWW_USER_USERNAME} \
+          --password ${AIRFLOW_WWW_USER_PASSWORD} \
+          --firstname Rocket \
+          --lastname Tshigidimisa \
+          --role Admin \
+          --email morobangtshigidimisa@gmail.com
+    restart: "no"
+
+  # ----------------------------------------------------------
+  # AIRFLOW WEBSERVER
+  # The UI you open at localhost:8080
+  # ----------------------------------------------------------
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # AIRFLOW SCHEDULER
+  # Watches your DAGs folder and triggers runs on schedule
+  # ----------------------------------------------------------
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: unless-stopped
+
+# ============================================================
+# VOLUMES
+# postgres_data persists your database between restarts
+# ============================================================
+volumes:
+  postgres_data:
