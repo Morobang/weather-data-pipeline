@@ -4,7 +4,7 @@ import time
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional
 
@@ -430,6 +430,136 @@ def extract_all_municipalities(sample_size: Optional[int] = None) -> str:
 
     return save_to_json(records)
 
+# ============================================================
+# HISTORICAL BACKFILL
+# Hits the Open-Meteo archive API
+# Goes back as far as you want — we default to 90 days
+# ============================================================
+
+def fetch_historical_weather(municipality: dict, start_date: str, end_date: str, retries: int = 3) -> Optional[dict]:
+    """
+    Fetch historical weather data for a single municipality.
+    Uses the Open-Meteo archive API instead of forecast API.
+
+    Args:
+        municipality: Dictionary with name, province, type, lat, lon
+        start_date:   YYYY-MM-DD format
+        end_date:     YYYY-MM-DD format
+        retries:      Number of retry attempts on failure
+
+    Returns:
+        Dictionary with historical weather data or None if failed
+    """
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude":   municipality["lat"],
+        "longitude":  municipality["lon"],
+        "start_date": start_date,
+        "end_date":   end_date,
+        "daily": [
+            "temperature_2m_max",
+            "temperature_2m_min",
+            "precipitation_sum",
+            "windspeed_10m_max",
+            "sunrise",
+            "sunset",
+            "daylight_duration",
+            "weathercode",
+        ],
+        "hourly": [
+            "temperature_2m",
+            "precipitation",
+            "windspeed_10m",
+            "relativehumidity_2m",
+            "cloudcover",
+            "visibility",
+            "uv_index",
+            "surface_pressure",
+        ],
+        "timezone": TIMEZONE,
+    }
+
+    for attempt in range(1, retries + 1):
+        try:
+            response = requests.get(url, params=params, timeout=60)
+            response.raise_for_status()
+            return {
+                "municipality": municipality["name"],
+                "province":     municipality["province"],
+                "type":         municipality["type"],
+                "lat":          municipality["lat"],
+                "lon":          municipality["lon"],
+                "fetched_at":   datetime.now().isoformat(),
+                "start_date":   start_date,
+                "end_date":     end_date,
+                "data":         response.json(),
+            }
+        except requests.exceptions.Timeout:
+            log.warning(f"Timeout on attempt {attempt}/{retries} for {municipality['name']} — retrying...")
+            time.sleep(2 ** attempt)
+        except requests.exceptions.RequestException as e:
+            log.error(f"Error on attempt {attempt}/{retries} for {municipality['name']}: {e}")
+            time.sleep(2)
+
+    log.error(f"FAILED after {retries} attempts — skipping {municipality['name']}")
+    return None
+
+
+def save_historical_to_json(records: list, start_date: str, end_date: str) -> str:
+    """
+    Save historical records to a JSON file.
+    """
+    output_dir = Path(DATA_DIR)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"weather_historical_{start_date}_to_{end_date}.json"
+    filepath = output_dir / filename
+    with open(filepath, "w") as f:
+        json.dump(records, f, indent=2)
+    log.info(f"Saved {len(records)} municipality records to {filepath}")
+    return str(filepath)
+
+
+def backfill_historical(days: int = 90, sample_size: Optional[int] = None) -> str:
+    """
+    Fetch historical weather data for all municipalities.
+    Called once on first pipeline run to seed the warehouse with history.
+
+    Args:
+        days:        How many days back to fetch (default 90)
+        sample_size: If provided, only fetch this many municipalities (for testing)
+
+    Returns:
+        Path to the saved JSON file
+    """
+    end_date   = datetime.now().strftime("%Y-%m-%d")
+    start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+    targets = MUNICIPALITIES[:sample_size] if sample_size else MUNICIPALITIES
+    log.info(f"Starting backfill — {len(targets)} municipalities — {start_date} to {end_date}")
+
+    records = []
+    failed  = []
+
+    for idx, municipality in enumerate(targets, 1):
+        log.info(f"[{idx}/{len(targets)}] {municipality['name']} ({municipality['province']}, {municipality['type']})")
+        record = fetch_historical_weather(municipality, start_date, end_date)
+        if record:
+            records.append(record)
+            daily_count  = len(record["data"]["daily"]["time"])
+            hourly_count = len(record["data"]["hourly"]["time"])
+            log.info(f"  Done — {daily_count} daily readings, {hourly_count} hourly readings")
+        else:
+            failed.append(municipality["name"])
+
+        if idx < len(targets):
+            time.sleep(0.5)
+
+    print_summary(records, len(targets))
+
+    if failed:
+        log.warning(f"Skipped: {', '.join(failed)}")
+
+    return save_historical_to_json(records, start_date, end_date)
 
 # ============================================================
 # ENTRY POINT — local testing only
