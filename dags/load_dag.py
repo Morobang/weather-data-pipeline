@@ -8,12 +8,17 @@ from airflow.operators.python import PythonOperator
 sys.path.insert(0, "/opt/airflow/dags")
 from datawarehouse.data_loading import load_daily_forecast
 from datawarehouse.data_transformation import run_all_verifications
+from datawarehouse.soda_checks import (
+    run_bronze_checks,
+    run_silver_checks,
+    run_gold_checks,
+)
 
 log = logging.getLogger(__name__)
 
 default_args = {
     "owner":            "rocket",
-    "retries":          3,
+    "retries":          1,
     "retry_delay":      timedelta(minutes=5),
     "email_on_failure": False,
 }
@@ -33,10 +38,29 @@ with DAG(
         python_callable=load_daily_forecast,
     )
 
+    bronze_checks_task = PythonOperator(
+        task_id="bronze_quality_checks",
+        python_callable=run_bronze_checks,
+    )
+
+    silver_checks_task = PythonOperator(
+        task_id="silver_quality_checks",
+        python_callable=run_silver_checks,
+    )
+
+    gold_checks_task = PythonOperator(
+        task_id="gold_quality_checks",
+        python_callable=run_gold_checks,
+    )
+
     verify_task = PythonOperator(
         task_id="verify_all_layers",
         python_callable=run_all_verifications,
     )
 
-    # load first then verify
-    load_task >> verify_task
+    # ============================================================
+    # TASK ORDER
+    # load → bronze checks → silver checks → gold checks → verify
+    # if any check fails the DAG stops there
+    # ============================================================
+    load_task >> bronze_checks_task >> silver_checks_task >> gold_checks_task >> verify_task

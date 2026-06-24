@@ -1,0 +1,45 @@
+# ============================================================
+# GOLD CHECKS
+# Checks on aggregated views
+# Makes sure the views return sensible aggregated data
+# ============================================================
+
+checks for gold.daily_summary:
+  # must have data
+  - row_count > 0:
+      name: Gold daily summary has rows
+
+  # avg temp must be within SA range
+  - min(avg_temp_c) >= -20:
+      name: Average temperature above minimum
+
+  - max(avg_temp_c) <= 60:
+      name: Average temperature below maximum
+
+  # total precipitation must never be negative
+  - min(total_precipitation_mm) >= 0:
+      name: Total precipitation not negative
+
+  # rainy hours must be between 0 and 24
+  - min(rainy_hours) >= 0:
+      name: Rainy hours not negative
+
+  - max(rainy_hours) <= 24:
+      name: Rainy hours not more than 24
+
+  # total readings per municipality per day must be 24
+  - min(total_readings) = 24:
+      name: Each municipality has 24 hourly readings
+
+  - max(total_readings) = 24:
+      name: No municipality has more than 24 readings
+
+
+checks for gold.province_summary:
+  # must have data
+  - row_count > 0:
+      name: Gold province summary has rows
+
+  # must have all 9 provinces for latest date
+  - row_count >= 9:
+      name: All 9 provinces represented

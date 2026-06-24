@@ -1,0 +1,52 @@
+# ============================================================
+# BRONZE CHECKS
+# Basic sanity checks on raw data landing zone
+# If these fail something is wrong with the API response
+# ============================================================
+
+checks for bronze.raw_weather_hourly:
+  # must have data
+  - row_count > 0:
+      name: Bronze hourly has rows
+
+  # municipality name must never be null
+  - missing_count(municipality) = 0:
+      name: Municipality name not null
+
+  # province must never be null
+  - missing_count(province) = 0:
+      name: Province not null
+
+  # fetched_at must never be null
+  - missing_count(fetched_at) = 0:
+      name: Fetched at not null
+
+  # raw_json must never be null
+  - missing_count(raw_json) = 0:
+      name: Raw JSON not null
+
+  # weather_date must never be null
+  - missing_count(weather_date) = 0:
+      name: Weather date not null
+
+
+checks for bronze.raw_weather_daily:
+  # must have data
+  - row_count > 0:
+      name: Bronze daily has rows
+
+  # municipality name must never be null
+  - missing_count(municipality) = 0:
+      name: Municipality name not null
+
+  # province must never be null
+  - missing_count(province) = 0:
+      name: Province not null
+
+  # raw_json must never be null
+  - missing_count(raw_json) = 0:
+      name: Raw JSON not null
+
+  # weather_date must never be null
+  - missing_count(weather_date) = 0:
+      name: Weather date not null

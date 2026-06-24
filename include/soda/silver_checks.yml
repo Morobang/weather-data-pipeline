@@ -1,0 +1,108 @@
+# ============================================================
+# SILVER CHECKS
+# Stricter checks on cleaned, typed data
+# Temperature ranges, no nulls on key columns, uniqueness
+# ============================================================
+
+checks for silver.weather_hourly:
+  # must have data
+  - row_count > 0:
+      name: Silver hourly has rows
+
+  # key columns must never be null
+  - missing_count(municipality) = 0:
+      name: Municipality not null
+
+  - missing_count(province) = 0:
+      name: Province not null
+
+  - missing_count(recorded_at) = 0:
+      name: Recorded at not null
+
+  - missing_count(weather_date) = 0:
+      name: Weather date not null
+
+  - missing_count(temperature_c) = 0:
+      name: Temperature not null
+
+  # SA temperature range — between -20°C and 60°C
+  - min(temperature_c) >= -20:
+      name: Temperature above minimum threshold
+
+  - max(temperature_c) <= 60:
+      name: Temperature below maximum threshold
+
+  # precipitation must never be negative
+  - min(precipitation_mm) >= 0:
+      name: Precipitation not negative
+
+  # humidity must be between 0 and 100
+  - min(humidity_pct) >= 0:
+      name: Humidity above 0
+
+  - max(humidity_pct) <= 100:
+      name: Humidity below 100
+
+  # windspeed must never be negative
+  - min(windspeed_kmh) >= 0:
+      name: Windspeed not negative
+
+  # uv index must never be negative
+  - min(uv_index) >= 0:
+      name: UV index not negative
+
+
+checks for silver.weather_daily:
+  # must have data
+  - row_count > 0:
+      name: Silver daily has rows
+
+  # key columns must never be null
+  - missing_count(municipality) = 0:
+      name: Municipality not null
+
+  - missing_count(province) = 0:
+      name: Province not null
+
+  - missing_count(weather_date) = 0:
+      name: Weather date not null
+
+  - missing_count(temperature_max_c) = 0:
+      name: Max temperature not null
+
+  - missing_count(temperature_min_c) = 0:
+      name: Min temperature not null
+
+  # max temp must always be higher than min temp
+  - failed rows:
+      name: Max temp always higher than min temp
+      fail condition: temperature_max_c < temperature_min_c
+
+  # SA temperature range
+  - min(temperature_min_c) >= -20:
+      name: Min temperature above threshold
+
+  - max(temperature_max_c) <= 60:
+      name: Max temperature below threshold
+
+  # precipitation must never be negative
+  - min(precipitation_sum_mm) >= 0:
+      name: Precipitation not negative
+
+  # daylight duration must be positive
+  - min(daylight_duration_s) > 0:
+      name: Daylight duration positive
+
+  # weathercode must be a known WMO code
+  - missing_count(weathercode) = 0:
+      name: Weather code not null
+
+
+checks for silver.dim_municipalities:
+  # must have all 257 municipalities
+  - row_count = 257:
+      name: All 257 municipalities present
+
+  # no duplicate municipalities
+  - duplicate_count(municipality, province) = 0:
+      name: No duplicate municipalities
