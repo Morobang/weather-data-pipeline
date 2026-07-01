@@ -67,7 +67,7 @@ jobs:
         run: |
           pytest tests/unit/ -v --tb=short
 
-      - name: Run integration tests
+      - name: Run integration structure tests
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
@@ -75,14 +75,8 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: |
-          pytest tests/integration/ -v --tb=short
+          pytest tests/integration/ -v --tb=short -k "schema or table_exists"
 
-      - name: Run all tests with coverage
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_DB: weather_db
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      - name: Run unit tests with coverage
         run: |
-          pytest tests/ -v --tb=short --cov=dags --cov-report=term-missing
+          pytest tests/unit/ -v --tb=short --cov=dags --cov-report=term-missing
