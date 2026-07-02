@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-07-02T08:26:01.998255",
+  "date": "2026-07-02",
+  "total_municipalities": 254,
+  "total_provinces": 9,
+  "municipalities_today": 27,
+  "days_of_history": 91,
+  "silver_hourly_rows": 550560,
+  "silver_daily_rows": 22940,
+  "bronze_rows": 656,
+  "dag_runs": [
+    {
+      "name": "backfill_weather",
+      "status": "success",
+      "ran_once": true,
+      "duration": "1h 39m"
+    },
+    {
+      "name": "extract_weather",
+      "status": "success",
+      "ran_once": false,
+      "duration": "5h 31m"
+    },
+    {
+      "name": "load_weather",
+      "status": "success",
+      "ran_once": false,
+      "duration": "16m"
+    }
+  ],
+  "data_source": "Open-Meteo API (free, no key required)",
+  "github_repo": "https://github.com/Morobang/weather-data-pipeline",
+  "stack": [
+    "Python",
+    "Apache Airflow",
+    "Docker",
+    "PostgreSQL",
+    "SODA",
+    "pytest",
+    "GitHub Actions"
+  ]
+}

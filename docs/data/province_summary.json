@@ -1,0 +1,101 @@
+[
+  {
+    "province": "Limpopo",
+    "date": "2026-07-02",
+    "municipality_count": 3,
+    "avg_temp_c": 16.69,
+    "max_temp_c": 27.5,
+    "min_temp_c": 10.7,
+    "total_precipitation": 0.0,
+    "avg_windspeed": 20.3,
+    "rainy_municipalities": 0
+  },
+  {
+    "province": "KwaZulu-Natal",
+    "date": "2026-07-02",
+    "municipality_count": 3,
+    "avg_temp_c": 15.26,
+    "max_temp_c": 22.1,
+    "min_temp_c": 4.3,
+    "total_precipitation": 1.2,
+    "avg_windspeed": 22.3,
+    "rainy_municipalities": 2
+  },
+  {
+    "province": "Mpumalanga",
+    "date": "2026-07-02",
+    "municipality_count": 2,
+    "avg_temp_c": 15.12,
+    "max_temp_c": 27.3,
+    "min_temp_c": 5.2,
+    "total_precipitation": 0.0,
+    "avg_windspeed": 22.1,
+    "rainy_municipalities": 0
+  },
+  {
+    "province": "Eastern Cape",
+    "date": "2026-07-02",
+    "municipality_count": 2,
+    "avg_temp_c": 14.02,
+    "max_temp_c": 16.6,
+    "min_temp_c": 11.5,
+    "total_precipitation": 12.7,
+    "avg_windspeed": 38.6,
+    "rainy_municipalities": 2
+  },
+  {
+    "province": "Gauteng",
+    "date": "2026-07-02",
+    "municipality_count": 4,
+    "avg_temp_c": 11.34,
+    "max_temp_c": 18.8,
+    "min_temp_c": 3.4,
+    "total_precipitation": 0.7,
+    "avg_windspeed": 19.3,
+    "rainy_municipalities": 2
+  },
+  {
+    "province": "North West",
+    "date": "2026-07-02",
+    "municipality_count": 3,
+    "avg_temp_c": 11.2,
+    "max_temp_c": 18.6,
+    "min_temp_c": 3.2,
+    "total_precipitation": 2.0,
+    "avg_windspeed": 22.1,
+    "rainy_municipalities": 2
+  },
+  {
+    "province": "Western Cape",
+    "date": "2026-07-02",
+    "municipality_count": 3,
+    "avg_temp_c": 10.89,
+    "max_temp_c": 14.7,
+    "min_temp_c": 7.0,
+    "total_precipitation": 14.2,
+    "avg_windspeed": 23.5,
+    "rainy_municipalities": 2
+  },
+  {
+    "province": "Northern Cape",
+    "date": "2026-07-02",
+    "municipality_count": 4,
+    "avg_temp_c": 6.33,
+    "max_temp_c": 10.6,
+    "min_temp_c": 2.2,
+    "total_precipitation": 6.1,
+    "avg_windspeed": 19.4,
+    "rainy_municipalities": 3
+  },
+  {
+    "province": "Free State",
+    "date": "2026-07-02",
+    "municipality_count": 3,
+    "avg_temp_c": 6.28,
+    "max_temp_c": 13.5,
+    "min_temp_c": 2.1,
+    "total_precipitation": 7.9,
+    "avg_windspeed": 22.0,
+    "rainy_municipalities": 3
+  }
+]
